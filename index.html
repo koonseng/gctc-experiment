@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Structural Similarity Study</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600&family=Source+Sans+3:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #FAFAF8;
+    --card: #FFFFFF;
+    --text: #1a1a1a;
+    --muted: #6b7280;
+    --accent: #2563EB;
+    --accent-hover: #1d4ed8;
+    --border: #e5e7eb;
+    --green: #059669;
+    --red: #dc2626;
+    --progress-bg: #e5e7eb;
+    --shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Source Sans 3', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .container {
+    max-width: 740px;
+    width: 100%;
+    padding: 24px 20px;
+    margin: 0 auto;
+  }
+
+  /* Header / Progress */
+  .header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+  .header h1 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.5rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+  .progress-bar {
+    width: 100%;
+    height: 6px;
+    background: var(--progress-bg);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+  .progress-text {
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  /* Screen containers */
+  .screen { display: none; }
+  .screen.active { display: block; }
+
+  /* Instruction screens */
+  .instructions {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: var(--shadow);
+  }
+  .instructions h2 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.35rem;
+    margin-bottom: 16px;
+  }
+  .instructions p {
+    margin-bottom: 12px;
+    font-size: 0.95rem;
+    color: #374151;
+  }
+  .instructions .highlight {
+    background: #EFF6FF;
+    border-left: 3px solid var(--accent);
+    padding: 12px 16px;
+    border-radius: 0 8px 8px 0;
+    margin: 16px 0;
+    font-size: 0.95rem;
+  }
+
+  /* Practice feedback */
+  .feedback-box {
+    padding: 16px;
+    border-radius: 8px;
+    margin-top: 16px;
+    font-size: 0.95rem;
+    display: none;
+  }
+  .feedback-box.correct {
+    background: #ECFDF5;
+    border: 1px solid #A7F3D0;
+    color: #065F46;
+    display: block;
+  }
+  .feedback-box.incorrect {
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    color: #991B1B;
+    display: block;
+  }
+
+  /* Trial card */
+  .trial-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px;
+    box-shadow: var(--shadow);
+  }
+
+  .reference-section {
+    margin-bottom: 24px;
+  }
+  .label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+  .reference-text {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.1rem;
+    line-height: 1.65;
+    color: var(--text);
+    padding: 16px;
+    background: #F9FAFB;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+  }
+
+  .divider {
+    height: 1px;
+    background: var(--border);
+    margin: 20px 0;
+  }
+
+  .question-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #374151;
+    margin-bottom: 16px;
+  }
+
+  /* Options */
+  .option {
+    display: block;
+    width: 100%;
+    text-align: left;
+    padding: 16px 20px;
+    margin-bottom: 10px;
+    background: var(--card);
+    border: 2px solid var(--border);
+    border-radius: 10px;
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1rem;
+    line-height: 1.55;
+    color: var(--text);
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, transform 0.1s;
+  }
+  .option:hover {
+    border-color: var(--accent);
+    background: #F8FAFF;
+    transform: translateX(2px);
+  }
+  .option.selected {
+    border-color: var(--accent);
+    background: #EFF6FF;
+  }
+  .option .option-label {
+    font-family: 'Source Sans 3', sans-serif;
+    font-weight: 600;
+    color: var(--accent);
+    margin-right: 8px;
+  }
+
+  /* Buttons */
+  .btn {
+    display: inline-block;
+    padding: 12px 28px;
+    border: none;
+    border-radius: 8px;
+    font-family: 'Source Sans 3', sans-serif;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .btn:active { transform: scale(0.98); }
+  .btn-primary {
+    background: var(--accent);
+    color: white;
+  }
+  .btn-primary:hover { background: var(--accent-hover); }
+  .btn-primary:disabled {
+    background: #93C5FD;
+    cursor: not-allowed;
+  }
+  .btn-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 20px;
+    gap: 12px;
+  }
+
+  /* Timer display (subtle) */
+  .timer {
+    font-size: 0.8rem;
+    color: var(--muted);
+    text-align: right;
+    margin-top: 8px;
+  }
+
+  /* Completion */
+  .completion {
+    text-align: center;
+    padding: 48px 32px;
+  }
+  .completion h2 {
+    font-family: 'Source Serif 4', Georgia, serif;
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+  }
+  .completion p {
+    color: var(--muted);
+    margin-bottom: 24px;
+  }
+  .completion-code {
+    font-family: monospace;
+    font-size: 1.2rem;
+    background: #F3F4F6;
+    padding: 12px 24px;
+    border-radius: 8px;
+    display: inline-block;
+    margin: 16px 0;
+    letter-spacing: 0.05em;
+  }
+
+  /* Attention check highlight */
+  .attention-warning {
+    background: #FFFBEB;
+    border: 1px solid #FDE68A;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    font-size: 0.9rem;
+    color: #92400E;
+  }
+
+  @media (max-width: 600px) {
+    .container { padding: 16px 12px; }
+    .trial-card, .instructions { padding: 20px 16px; }
+    .reference-text { font-size: 1rem; }
+    .option { padding: 14px 16px; font-size: 0.95rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- ============ CONSENT SCREEN ============ -->
+  <div class="screen active" id="screen-consent">
+    <div class="instructions">
+      <h2>Consent & Study Information</h2>
+      <p><strong>Study Title:</strong> Perceiving Structural Similarity Across Domains</p>
+      <p><strong>Researcher:</strong> Koon Seng Lim (Independent Researcher, Singapore)</p>
+      <p><strong>Contact:</strong> koonseng101@gmail.com</p>
+      <p><strong>Estimated Duration:</strong> 15–20 minutes</p>
+      <p><strong>Payment:</strong> $3.50 (approximately $12/hour)</p>
+
+      <div class="highlight">
+        <strong>What you'll do:</strong> You will read short sentences describing processes from various fields
+        (e.g., biology, finance, music, geology). For each trial, you'll be shown a reference sentence and
+        three options. Your task is to select which option describes the most similar <em>underlying pattern
+        or relationship</em> to the reference — even though the sentences are about different topics.
+      </div>
+
+      <p><strong>Risks:</strong> No known risks beyond normal computer use. You may skip any trial.</p>
+      <p><strong>Data:</strong> Your responses are anonymous. We record your choices and response times.
+        Your Prolific ID is stored only to verify payment and is not linked to your identity.</p>
+      <p><strong>Withdrawal:</strong> You may withdraw at any time by closing this window. Partial
+        data will not be used.</p>
+      <p><strong>Ethics:</strong> This study follows the principles of the Declaration of Helsinki.
+        By clicking "I Consent" below, you confirm that you have read this information, are at least
+        18 years old, and agree to participate.</p>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="showScreen('screen-instructions')">I Consent & Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ INSTRUCTIONS SCREEN ============ -->
+  <div class="screen" id="screen-instructions">
+    <div class="instructions">
+      <h2>Task Instructions</h2>
+
+      <p>In this study, you will see sentences that describe processes or patterns from many different
+        fields — such as biology, music, finance, cooking, and engineering.</p>
+
+      <p>On each trial, you will see:</p>
+      <div class="highlight">
+        <strong>A reference sentence</strong> at the top, followed by <strong>three options</strong> (A, B, C).
+        <br><br>
+        Your task: choose the option that shares the most similar <strong>underlying pattern or
+        relationship</strong> with the reference sentence — even though they describe completely different topics.
+      </div>
+
+      <p><strong>Important:</strong> We are <em>not</em> asking which sentence is about the same topic.
+        We are asking which sentence describes the same <em>kind of process</em>.</p>
+
+      <p><strong>Example:</strong></p>
+      <p style="padding-left: 16px; border-left: 2px solid var(--border); margin: 12px 0;">
+        <em>Reference:</em> "A single match ignites dry brush, spreading fire across the entire hillside."<br><br>
+        <em>Option A:</em> "A rumour starts with one person and quickly spreads through the entire school."<br>
+        <em>Option B:</em> "The gardener carefully waters each plant in the greenhouse every morning."<br>
+        <em>Option C:</em> "Firefighters train for months before their first real emergency."<br><br>
+        The correct answer is <strong>A</strong> — both describe a <strong>cascading spread from a single trigger</strong>,
+        even though one is about fire and the other is about rumours.
+      </p>
+
+      <p>You'll start with <strong>3 practice trials</strong> (with feedback), then complete
+        <strong>30 main trials</strong>. Work at a comfortable pace — there is no time pressure,
+        but please don't spend more than about 60 seconds per trial.</p>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="startPractice()">Start Practice Trials</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ PRACTICE SCREEN ============ -->
+  <div class="screen" id="screen-practice">
+    <div class="header">
+      <h1>Practice Trial <span id="practice-num">1</span> of 3</h1>
+    </div>
+    <div class="trial-card" id="practice-card">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- ============ PRACTICE→MAIN TRANSITION ============ -->
+  <div class="screen" id="screen-transition">
+    <div class="instructions">
+      <h2>Practice Complete!</h2>
+      <p>Great — you've completed the practice trials. You now understand the task.</p>
+      <p>You will now complete <strong>30 main trials</strong>. These will not have feedback.
+        Please read each sentence carefully and choose the option with the most similar underlying
+        pattern or relationship.</p>
+      <div class="highlight">
+        Remember: focus on the <strong>type of process or relationship</strong>, not the specific topic.
+      </div>
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="startMain()">Begin Main Trials</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ MAIN TRIAL SCREEN ============ -->
+  <div class="screen" id="screen-trial">
+    <div class="header">
+      <h1>Structural Similarity Study</h1>
+      <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+      <div class="progress-text" id="progress-text">Trial 1 of 30</div>
+    </div>
+    <div class="trial-card" id="trial-card">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <!-- ============ DEMOGRAPHICS SCREEN ============ -->
+  <div class="screen" id="screen-demographics">
+    <div class="instructions">
+      <h2>Almost Done — Brief Background</h2>
+      <p>Please answer these optional questions to help us interpret the results.</p>
+
+      <div style="margin: 16px 0;">
+        <label style="font-weight: 500; display: block; margin-bottom: 6px;">Age range:</label>
+        <select id="demo-age" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; width: 100%;">
+          <option value="">Prefer not to say</option>
+          <option value="18-24">18–24</option>
+          <option value="25-34">25–34</option>
+          <option value="35-44">35–44</option>
+          <option value="45-54">45–54</option>
+          <option value="55-64">55–64</option>
+          <option value="65+">65+</option>
+        </select>
+      </div>
+
+      <div style="margin: 16px 0;">
+        <label style="font-weight: 500; display: block; margin-bottom: 6px;">Highest education level:</label>
+        <select id="demo-edu" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; width: 100%;">
+          <option value="">Prefer not to say</option>
+          <option value="high-school">High school / GED</option>
+          <option value="bachelors">Bachelor's degree</option>
+          <option value="masters">Master's degree</option>
+          <option value="phd">Doctoral degree (PhD, MD, etc.)</option>
+          <option value="other">Other</option>
+        </select>
+      </div>
+
+      <div style="margin: 16px 0;">
+        <label style="font-weight: 500; display: block; margin-bottom: 6px;">Is English your first language?</label>
+        <select id="demo-english" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; width: 100%;">
+          <option value="">Prefer not to say</option>
+          <option value="yes">Yes</option>
+          <option value="no">No, but fluent</option>
+          <option value="no-basic">No, basic proficiency</option>
+        </select>
+      </div>
+
+      <div style="margin: 16px 0;">
+        <label style="font-weight: 500; display: block; margin-bottom: 6px;">How familiar are you with analogical or structural reasoning tasks?</label>
+        <select id="demo-familiar" style="padding: 8px 12px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; width: 100%;">
+          <option value="">Prefer not to say</option>
+          <option value="none">Not at all familiar</option>
+          <option value="somewhat">Somewhat familiar</option>
+          <option value="very">Very familiar (e.g., studied cognitive science)</option>
+        </select>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-primary" onclick="submitStudy()">Submit & Finish</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ COMPLETION SCREEN ============ -->
+  <div class="screen" id="screen-complete">
+    <div class="instructions completion">
+      <h2>Thank You!</h2>
+      <p>Your responses have been recorded. You will be redirected to Prolific shortly.</p>
+      <p>If you are not redirected automatically, please use this completion code:</p>
+      <div class="completion-code" id="completion-code">XXXXXXXX</div>
+      <p style="font-size: 0.85rem;">
+        <a id="prolific-redirect" href="#" style="color: var(--accent);">Click here to return to Prolific</a>
+      </p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════════
+// CONFIGURATION
+// ═══════════════════════════════════════════════════════
+const CONFIG = {
+  TRIALS_PER_PARTICIPANT: 30,
+  PROLIFIC_COMPLETION_URL: 'https://app.prolific.com/submissions/complete?cc=CQ3RGYUA', // Replace with your code
+  COMPLETION_CODE: 'CQ3RGYUA',   // Replace with Prolific completion code
+  DATA_ENDPOINT: '',             // Your server endpoint for POST data (see setup guide)
+  ATTENTION_CHECK_POSITIONS: [8, 22],  // 0-indexed positions within 30 trials
+};
+
+// ═══════════════════════════════════════════════════════
+// PRACTICE TRIALS (hardcoded, with feedback)
+// ═══════════════════════════════════════════════════════
+const PRACTICE_TRIALS = [
+  {
+    reference: "When one species vanishes from a food web, its predators and prey both experience cascading population shifts.",
+    options: [
+      { text: "A factory shutdown ripples through supply chains as downstream businesses lose their primary input.", correct: true },
+      { text: "Deep ocean currents carry nutrients from polar regions to tropical waters over decades.", correct: false },
+      { text: "Annual migration routes follow the same paths that herds have used for thousands of years.", correct: false },
+    ],
+    explanation: "Both the reference and Option A describe a cascading chain reaction where removing one element disrupts connected elements. The other options describe transport and repetition, which are different structural patterns."
+  },
+  {
+    reference: "A vaccine introduces a weakened pathogen so the immune system can build defenses before encountering the real threat.",
+    options: [
+      { text: "Apprentice chefs practise knife skills on inexpensive vegetables before working with costly ingredients.", correct: true },
+      { text: "Antibiotics target bacterial cell walls, causing the organisms to rupture and die.", correct: false },
+      { text: "Seasonal allergies trigger histamine release when pollen counts exceed a threshold.", correct: false },
+    ],
+    explanation: "Both the reference and Option A describe controlled exposure to a low-stakes version of a challenge to build capability for the real thing. Option B is about destruction and Option C is about threshold-triggered response — different patterns."
+  },
+  {
+    reference: "A seed lies dormant in frozen soil for years until the right combination of warmth and moisture triggers germination.",
+    options: [
+      { text: "A retired athlete returns to competition when a rule change suddenly favours their playing style.", correct: true },
+      { text: "Coral reefs grow incrementally, adding thin layers of calcium carbonate each year.", correct: false },
+      { text: "Predators select the weakest individuals from a herd, maintaining the group's overall fitness.", correct: false },
+    ],
+    explanation: "Both the reference and Option A describe something lying dormant/inactive until specific conditions activate it. The other options describe gradual accumulation and selective removal — different patterns."
+  }
+];
+
+// ═══════════════════════════════════════════════════════
+// ATTENTION CHECK TRIALS
+// ═══════════════════════════════════════════════════════
+const ATTENTION_CHECKS = [
+  {
+    pair_id: "attn_1",
+    pattern: "attention_check",
+    reference: "For this question, please select Option B regardless of the sentence content. This checks that you are reading carefully.",
+    options: [
+      { text: "Rivers carry sediment downstream, depositing it in deltas where the water slows.", label: "A", correct: false },
+      { text: "Please select this option to confirm you are reading the instructions.", label: "B", correct: true },
+      { text: "Volcanic eruptions release magma that cools into new rock formations.", label: "C", correct: false },
+    ]
+  },
+  {
+    pair_id: "attn_2",
+    pattern: "attention_check",
+    reference: "This is an attention check. Please choose the option that mentions 'purple elephants' to show you are paying attention.",
+    options: [
+      { text: "Tidal patterns follow the gravitational pull of the moon in regular cycles.", label: "A", correct: false },
+      { text: "Market corrections occur when asset prices exceed their fundamental valuations.", label: "B", correct: false },
+      { text: "Purple elephants dance on the horizon — this is the correct attention check response.", label: "C", correct: true },
+    ]
+  }
+];
+
+// ═══════════════════════════════════════════════════════
+// STATE
+// ═══════════════════════════════════════════════════════
+let state = {
+  prolificPID: '',
+  studyID: '',
+  sessionID: '',
+  assignedTrials: [],
+  currentTrialIndex: 0,
+  responses: [],
+  practiceIndex: 0,
+  trialStartTime: 0,
+  sessionStartTime: Date.now(),
+};
+
+// ═══════════════════════════════════════════════════════
+// INITIALIZATION
+// ═══════════════════════════════════════════════════════
+(function init() {
+  // Extract Prolific URL params
+  const params = new URLSearchParams(window.location.search);
+  state.prolificPID = params.get('PROLIFIC_PID') || 'unknown';
+  state.studyID = params.get('STUDY_ID') || 'unknown';
+  state.sessionID = params.get('SESSION_ID') || 'unknown';
+
+  // Set completion code
+  document.getElementById('completion-code').textContent = CONFIG.COMPLETION_CODE;
+  document.getElementById('prolific-redirect').href = CONFIG.PROLIFIC_COMPLETION_URL;
+})();
+
+// ═══════════════════════════════════════════════════════
+// TRIAL LOADING — Replace this with your server fetch
+// ═══════════════════════════════════════════════════════
+
+// OPTION A: Embed trials directly (for static hosting)
+// Paste your prolific_trials.json content here:
+let ALL_TRIALS = []; // Will be loaded
+
+async function loadTrials() {
+  // OPTION A: Fetch from same server
+  try {
+    const resp = await fetch('prolific_trials.json');
+    ALL_TRIALS = await resp.json();
+  } catch(e) {
+    console.error('Could not load trials JSON. Using fallback.');
+    // Fallback: trials should be embedded at build time
+    ALL_TRIALS = window.EMBEDDED_TRIALS || [];
+  }
+}
+
+function assignTrials() {
+  // Deterministic assignment based on PID hash
+  // Each participant gets 30 trials, sampling evenly across patterns
+  const shuffled = [...ALL_TRIALS];
+
+  // Seeded shuffle using PID
+  let seed = 0;
+  for (let i = 0; i < state.prolificPID.length; i++) {
+    seed = ((seed << 5) - seed) + state.prolificPID.charCodeAt(i);
+    seed |= 0;
+  }
+  function seededRandom() {
+    seed = (seed * 1664525 + 1013904223) & 0x7fffffff;
+    return seed / 0x7fffffff;
+  }
+  for (let i = shuffled.length - 1; i > 0; i--) {
+    const j = Math.floor(seededRandom() * (i + 1));
+    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  }
+
+  // Stratified sampling: take ~1-2 from each of 20 patterns
+  const byPattern = {};
+  shuffled.forEach(t => {
+    if (!byPattern[t.pattern]) byPattern[t.pattern] = [];
+    byPattern[t.pattern].push(t);
+  });
+
+  const selected = [];
+  const patterns = Object.keys(byPattern);
+
+  // Round 1: 1 per pattern = 20
+  patterns.forEach(p => {
+    if (byPattern[p].length > 0) selected.push(byPattern[p].shift());
+  });
+
+  // Round 2: 1 more per pattern until we reach 30
+  const remaining = CONFIG.TRIALS_PER_PARTICIPANT - selected.length;
+  const pats2 = patterns.filter(p => byPattern[p].length > 0);
+  // Shuffle pattern order for round 2
+  for (let i = pats2.length - 1; i > 0; i--) {
+    const j = Math.floor(seededRandom() * (i + 1));
+    [pats2[i], pats2[j]] = [pats2[j], pats2[i]];
+  }
+  for (let i = 0; i < remaining && i < pats2.length; i++) {
+    selected.push(byPattern[pats2[i]].shift());
+  }
+
+  // Shuffle final order
+  for (let i = selected.length - 1; i > 0; i--) {
+    const j = Math.floor(seededRandom() * (i + 1));
+    [selected[i], selected[j]] = [selected[j], selected[i]];
+  }
+
+  // Insert attention checks at designated positions
+  CONFIG.ATTENTION_CHECK_POSITIONS.forEach((pos, idx) => {
+    if (pos <= selected.length) {
+      selected.splice(pos, 0, ATTENTION_CHECKS[idx]);
+    }
+  });
+
+  state.assignedTrials = selected;
+}
+
+// ═══════════════════════════════════════════════════════
+// SCREEN MANAGEMENT
+// ═══════════════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ═══════════════════════════════════════════════════════
+// PRACTICE TRIALS
+// ═══════════════════════════════════════════════════════
+function startPractice() {
+  state.practiceIndex = 0;
+  showScreen('screen-practice');
+  renderPractice();
+}
+
+function renderPractice() {
+  const trial = PRACTICE_TRIALS[state.practiceIndex];
+  const card = document.getElementById('practice-card');
+  document.getElementById('practice-num').textContent = state.practiceIndex + 1;
+
+  // Shuffle options
+  const opts = [...trial.options];
+  for (let i = opts.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [opts[i], opts[j]] = [opts[j], opts[i]];
+  }
+
+  const labels = ['A', 'B', 'C'];
+  card.innerHTML = `
+    <div class="reference-section">
+      <div class="label">Reference Sentence</div>
+      <div class="reference-text">${trial.reference}</div>
+    </div>
+    <div class="divider"></div>
+    <div class="question-text">Which option describes the most similar <strong>underlying pattern</strong>?</div>
+    ${opts.map((o, i) => `
+      <button class="option" data-correct="${o.correct}" onclick="handlePracticeChoice(this)">
+        <span class="option-label">${labels[i]}.</span> ${o.text}
+      </button>
+    `).join('')}
+    <div class="feedback-box" id="practice-feedback"></div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="practice-next" style="display:none;" onclick="nextPractice()">
+        ${state.practiceIndex < 2 ? 'Next Practice Trial' : 'Continue to Main Study'}
+      </button>
+    </div>
+  `;
+}
+
+function handlePracticeChoice(btn) {
+  // Disable all options
+  document.querySelectorAll('#practice-card .option').forEach(o => {
+    o.style.pointerEvents = 'none';
+    if (o.dataset.correct === 'true') {
+      o.style.borderColor = '#059669';
+      o.style.background = '#ECFDF5';
+    }
+  });
+
+  const correct = btn.dataset.correct === 'true';
+  if (!correct) {
+    btn.style.borderColor = '#DC2626';
+    btn.style.background = '#FEF2F2';
+  }
+
+  const fb = document.getElementById('practice-feedback');
+  fb.className = 'feedback-box ' + (correct ? 'correct' : 'incorrect');
+  fb.innerHTML = `<strong>${correct ? 'Correct!' : 'Not quite.'}</strong> ${PRACTICE_TRIALS[state.practiceIndex].explanation}`;
+
+  document.getElementById('practice-next').style.display = 'inline-block';
+}
+
+function nextPractice() {
+  state.practiceIndex++;
+  if (state.practiceIndex >= PRACTICE_TRIALS.length) {
+    showScreen('screen-transition');
+  } else {
+    renderPractice();
+  }
+}
+
+// ═══════════════════════════════════════════════════════
+// MAIN TRIALS
+// ═══════════════════════════════════════════════════════
+async function startMain() {
+  await loadTrials();
+  assignTrials();
+  state.currentTrialIndex = 0;
+  showScreen('screen-trial');
+  renderTrial();
+}
+
+function renderTrial() {
+  const totalDisplay = state.assignedTrials.length;
+  const trial = state.assignedTrials[state.currentTrialIndex];
+
+  // Update progress
+  const pct = ((state.currentTrialIndex) / totalDisplay * 100).toFixed(0);
+  document.getElementById('progress-fill').style.width = pct + '%';
+  document.getElementById('progress-text').textContent =
+    `Trial ${state.currentTrialIndex + 1} of ${totalDisplay}`;
+
+  const card = document.getElementById('trial-card');
+
+  // Handle attention check vs normal trial
+  if (trial.pattern === 'attention_check') {
+    const opts = [...trial.options]; // Don't shuffle attention checks
+    const labels = ['A', 'B', 'C'];
+    card.innerHTML = `
+      <div class="attention-warning">⚠ Please read this trial carefully.</div>
+      <div class="reference-section">
+        <div class="label">Reference</div>
+        <div class="reference-text">${trial.reference}</div>
+      </div>
+      <div class="divider"></div>
+      ${opts.map((o, i) => `
+        <button class="option" data-idx="${i}" data-correct="${o.correct}" onclick="handleMainChoice(this)">
+          <span class="option-label">${labels[i]}.</span> ${o.text}
+        </button>
+      `).join('')}
+    `;
+  } else {
+    // Build options: match + 2 foils, shuffled
+    const opts = [
+      { text: trial.match, domain: trial.match_domain, isMatch: true },
+      { text: trial.foil_1, domain: trial.foil_1_domain, isMatch: false },
+      { text: trial.foil_2, domain: trial.foil_2_domain, isMatch: false },
+    ];
+    // Shuffle
+    for (let i = opts.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [opts[i], opts[j]] = [opts[j], opts[i]];
+    }
+
+    const labels = ['A', 'B', 'C'];
+    card.innerHTML = `
+      <div class="reference-section">
+        <div class="label">Reference Sentence</div>
+        <div class="reference-text">${trial.reference}</div>
+      </div>
+      <div class="divider"></div>
+      <div class="question-text">Which option describes the most similar <strong>underlying pattern or relationship</strong>?</div>
+      ${opts.map((o, i) => `
+        <button class="option" data-idx="${i}" data-match="${o.isMatch}" onclick="handleMainChoice(this)">
+          <span class="option-label">${labels[i]}.</span> ${o.text}
+        </button>
+      `).join('')}
+    `;
+  }
+
+  state.trialStartTime = Date.now();
+}
+
+function handleMainChoice(btn) {
+  const rt = Date.now() - state.trialStartTime;
+  const trial = state.assignedTrials[state.currentTrialIndex];
+
+  let correct;
+  if (trial.pattern === 'attention_check') {
+    correct = btn.dataset.correct === 'true';
+  } else {
+    correct = btn.dataset.match === 'true';
+  }
+
+  // Record response
+  state.responses.push({
+    trial_index: state.currentTrialIndex,
+    pair_id: trial.pair_id,
+    pattern: trial.pattern,
+    chose_correct: correct,
+    response_time_ms: rt,
+    timestamp: new Date().toISOString(),
+  });
+
+  // Brief visual feedback (subtle)
+  btn.classList.add('selected');
+
+  // Advance after short delay
+  setTimeout(() => {
+    state.currentTrialIndex++;
+    if (state.currentTrialIndex >= state.assignedTrials.length) {
+      showScreen('screen-demographics');
+    } else {
+      renderTrial();
+    }
+  }, 300);
+}
+
+// ═══════════════════════════════════════════════════════
+// SUBMISSION
+// ═══════════════════════════════════════════════════════
+async function submitStudy() {
+  const payload = {
+    prolific_pid: state.prolificPID,
+    study_id: state.studyID,
+    session_id: state.sessionID,
+    session_start: new Date(state.sessionStartTime).toISOString(),
+    session_end: new Date().toISOString(),
+    demographics: {
+      age: document.getElementById('demo-age').value,
+      education: document.getElementById('demo-edu').value,
+      english_first: document.getElementById('demo-english').value,
+      familiarity: document.getElementById('demo-familiar').value,
+    },
+    n_trials: state.responses.length,
+    n_correct: state.responses.filter(r => r.chose_correct).length,
+    attention_checks_passed: state.responses
+      .filter(r => r.pattern === 'attention_check')
+      .every(r => r.chose_correct),
+    responses: state.responses,
+  };
+
+  console.log('Study data:', JSON.stringify(payload, null, 2));
+
+  // Send to server
+  if (CONFIG.DATA_ENDPOINT) {
+    try {
+      await fetch(CONFIG.DATA_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } catch(e) {
+      console.error('Failed to submit data:', e);
+      // Store in localStorage as backup
+      try {
+        const key = `gctc_backup_${state.prolificPID}_${Date.now()}`;
+        localStorage.setItem(key, JSON.stringify(payload));
+      } catch(e2) { /* localStorage may not be available */ }
+    }
+  }
+
+  // Show completion
+  showScreen('screen-complete');
+
+  // Auto-redirect after 5 seconds
+  setTimeout(() => {
+    window.location.href = CONFIG.PROLIFIC_COMPLETION_URL;
+  }, 5000);
+}
+</script>
+
+</body>
+</html>
