@@ -872,11 +872,11 @@ async function submitStudy() {
   // Send to server
   if (CONFIG.DATA_ENDPOINT) {
     try {
-      await fetch(CONFIG.DATA_ENDPOINT, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+        await fetch(CONFIG.DATA_ENDPOINT, {
+          method: 'POST',
+          mode: 'no-cors',
+          body: JSON.stringify(payload),
+        });
     } catch(e) {
       console.error('Failed to submit data:', e);
       // Store in localStorage as backup
