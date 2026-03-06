@@ -847,6 +847,11 @@ function handleMainChoice(btn) {
 // SUBMISSION
 // ═══════════════════════════════════════════════════════
 async function submitStudy() {
+  const btn = document.querySelector('#screen-demographics button');
+  if (btn.disabled) return;
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
   const payload = {
     prolific_pid: state.prolificPID,
     study_id: state.studyID,
